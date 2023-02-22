@@ -13,32 +13,33 @@ jobs:
     container:
       image: mstorsjo/llvm-mingw:latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: libsdl-org/SDL
-          path: sdl
-          ref: SDL2
-      - name: build-sdl
-        run: |
-          echo ${{ github.workspace }}
-          mkdir -p ${{ github.workspace }}/local
-          mkdir build
-          cd build
-          ../sdl/configure --host=aarch64-w64-mingw32 --prefix=${{ github.workspace }}/local
-          make -j16
-          make install
-      - name: build x264
-        run: |
-          git clone --depth=1 https://code.videolan.org/videolan/x264.git x264
-          cd x264
-          export PKG_CONFIG_LIBDIR=${{ github.workspace }}/local/lib/pkgconfig
-          ./configure --host=aarch64-w64-mingw32 --prefix=${{ github.workspace }}/local --enable-pic --extra-cflags="-mfpu=neon" --cross-prefix=aarch64-w64-mingw32- --enable-shared --enable-static
-          make -j16
-          make install
+#      - uses: actions/checkout@v3
+#        with:
+#          repository: libsdl-org/SDL
+#          path: sdl
+#          ref: SDL2
+#      - name: build-sdl
+#        run: |
+#          echo ${{ github.workspace }}
+#          mkdir -p ${{ github.workspace }}/local
+#          mkdir build
+#          cd build
+#          ../sdl/configure --host=aarch64-w64-mingw32 --prefix=${{ github.workspace }}/local
+#          make -j16
+#          make install
+#      - name: build x264
+#        run: |
+#          git clone --depth=1 https://code.videolan.org/videolan/x264.git x264
+#          cd x264
+#          export PKG_CONFIG_LIBDIR=${{ github.workspace }}/local/lib/pkgconfig
+#          ./configure --host=aarch64-w64-mingw32 --prefix=${{ github.workspace }}/local --enable-pic --extra-cflags="-mfpu=neon" --cross-prefix=aarch64-w64-mingw32- --enable-shared --enable-static
+#          make -j16
+#          make install
       - uses: actions/checkout@v3 
         with:
           repository: FFmpeg/FFmpeg
           path: ffmpeg
+          ref: refs/tags/n4.2.1
       - name: build ffmpeg
         run: |
           # /opt/llvm-mingw/aarch64-w64-mingw32/
@@ -61,7 +62,7 @@ jobs:
         run: |
           mkdir output
           readlink -f output
-          cp ${{ github.workspace }}/local/bin/*.exe ${{ github.workspace }}/local/bin/*.dll output
+          cp ${{ github.workspace }}/local/bin/*.exe ${{ github.workspace }}/local/bin/*.dll ${{ github.workspace }}/local/bin/*.lib ${{ github.workspace }}/local/lib/*.def ${{ github.workspace }}/local/lib/pkgconfig/*.pc output
           # tar cfz all.tar.gz ${{ github.workspace }}/local/bin
           cd output
           zip -r -D ../ffmpeg-wos-arm64.zip .
