@@ -67,7 +67,24 @@ jobs:
           # tar cfz all.tar.gz ${{ github.workspace }}/local/bin
           cd output
           zip -r -D ../ffmpeg-wos-arm64.zip .
-      - uses: IsaacShelton/update-existing-release@v1.3.2
+      - uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: ffmpeg-wos-arm64.zip
+          tag_name: main
+          release_name: main
+          draft: true
+          prerelease: false
+      - uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ffmpeg-wos-arm64.zip
+          asset_name: ffmpeg-wos-arm64.zip
+          asset_content_type: application/zip
+      - uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
