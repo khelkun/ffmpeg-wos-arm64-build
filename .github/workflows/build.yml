@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
+    tags:
+      - '*'
   workflow_dispatch:
-  schedule:
-    - cron: 0 0 * * 1
 
 jobs:
   build:
@@ -73,9 +73,9 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
-          draft: true
+          draft: false
           prerelease: false
-      - uses: actions/upload-release-asset@v1.0.1
+      - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
