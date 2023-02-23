@@ -62,8 +62,14 @@ jobs:
       - name: archive
         run: |
           mkdir output
+          mkdir output/bin
+          mkdir output/lib
+          mkdir output/pkgconfig
           readlink -f output
-          cp ${{ github.workspace }}/local/bin/*.exe ${{ github.workspace }}/local/bin/*.dll ${{ github.workspace }}/local/bin/*.lib ${{ github.workspace }}/local/lib/*.def ${{ github.workspace }}/local/lib/pkgconfig/*.pc output
+          cp ${{ github.workspace }}/local/bin/*.exe ${{ github.workspace }}/local/bin/*.dll output/bin
+          cp ${{ github.workspace }}/local/bin/*.lib ${{ github.workspace }}/local/lib/*.def output/lib
+          cp ${{ github.workspace }}/local/lib/pkgconfig/*.pc output/lib/pkgconfig
+          cp -r ${{ github.workspace }}/local/include output
           # tar cfz all.tar.gz ${{ github.workspace }}/local/bin
           cd output
           zip -r -D ../ffmpeg-4.2.1-wos-arm64.zip .
