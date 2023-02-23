@@ -55,22 +55,26 @@ jobs:
           # sed -i 's/0x020100/0x030000/' ./configure
           export PKG_CONFIG_LIBDIR=${{ github.workspace }}/local/lib/pkgconfig
           #./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --enable-sdl --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --enable-libx264 --enable-gpl --enable-nonfree
-          #./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --disable-libx264 --enable-gpl --enable-nonfree
+          ./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --disable-libx264 --enable-gpl --enable-nonfree
           
-          #make -j16
-          #make install
-          #debug
+          make -j16
+          make install
           cd ..
-          mkdir -p ${{ github.workspace }}/local
-          touch ${{ github.workspace }}/local/foo
-          echo "current working dir:"
-          pwd
-          echo "${{ github.workspace }} content:"
-          ls -l ${{ github.workspace }}
-          ls -l ${{ github.workspace }}/local
+          
+          # debug
+          echo "github.workspace=${{ github.workspace }}"
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "runner.workspace=${{ runner.workspace }}"
+          echo "RUNNER_WORKSPACE=$RUNNER_WORKSPACE"
+          echo "pwd=$(pwd)"
+          #mkdir -p ${{ github.workspace }}/local
+          #touch ${{ github.workspace }}/local/foo
+          #echo "${{ github.workspace }} content:"
+          #ls -l ${{ github.workspace }}
+          #ls -l ${{ github.workspace }}/local
+          
           cp -r ${{ github.workspace }}/local $GITHUB_WORKSPACE
-          ls -l $GITHUB_WORKSPACE
+          ls $GITHUB_WORKSPACE
       - name: Cache build output
         id: cache-save-build-ouput
         uses: actions/cache/save@v3
@@ -99,16 +103,12 @@ jobs:
           fail-on-cache-miss: true
       - name: archive
         run: |
-
-          echo "current working dir:"
-          pwd
-          echo "current working dir content:"
-          ls -l ./
-          ls -l ./local
+          echo "restored cache:"
+          ls ./local
           mkdir output
           mkdir output/bin
           mkdir output/lib
-          mkdir output/pkgconfig
+          mkdir output/lib/pkgconfig
           readlink -f output
           cp local/bin/*.exe local/bin/*.dll output/bin
           cp local/bin/*.lib local/lib/*.def output/lib
