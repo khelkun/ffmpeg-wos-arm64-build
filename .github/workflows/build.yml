@@ -43,8 +43,8 @@ jobs:
       - name: build ffmpeg
         run: |
           # /opt/llvm-mingw/aarch64-w64-mingw32/
-          # ln -s ${{ github.workspace }}/local/bin/sdl2-config ${{ github.workspace }}/local/bin/aarch64-w64-mingw32-sdl2-config
-          # chmod +x ${{ github.workspace }}/local/bin/sdl2-config ${{ github.workspace }}/local/bin/aarch64-w64-mingw32-sdl2-config
+          # ln -s local/bin/sdl2-config local/bin/aarch64-w64-mingw32-sdl2-config
+          # chmod +x local/bin/sdl2-config local/bin/aarch64-w64-mingw32-sdl2-config
           # export PATH=$PATH:${{ github.workspace }}/local/bin
 
           # do not work check : https://trac.ffmpeg.org/wiki/HWAccelIntro#DXVA2
@@ -55,37 +55,66 @@ jobs:
           # sed -i 's/0x020100/0x030000/' ./configure
           export PKG_CONFIG_LIBDIR=${{ github.workspace }}/local/lib/pkgconfig
           #./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --enable-sdl --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --enable-libx264 --enable-gpl --enable-nonfree
-          ./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --disable-libx264 --enable-gpl --enable-nonfree
+          #./configure --pkg-config=/usr/bin/x86_64-pc-linux-gnu-pkg-config --pkgconfigdir=${{ github.workspace }}/local/lib/pkgconfig --cross-prefix=aarch64-w64-mingw32- --arch=arm64 --target-os=mingw32 --disable-doc --prefix=${{ github.workspace }}/local --disable-static --enable-shared --disable-libx264 --enable-gpl --enable-nonfree
           
-          make -j16
-          make install
-      - name: Cache build output ${{ github.workspace }}/local
-        uses: actions/cache@v3
+          #make -j16
+          #make install
+          #debug
+          cd ..
+          mkdir -p ${{ github.workspace }}/local
+          touch ${{ github.workspace }}/local/foo
+          echo "current working dir:"
+          pwd
+          echo "${{ github.workspace }} content:"
+          ls -l ${{ github.workspace }}
+          ls -l ${{ github.workspace }}/local
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          cp -r ${{ github.workspace }}/local $GITHUB_WORKSPACE
+          ls -l $GITHUB_WORKSPACE
+      - name: Cache build output
+        id: cache-save-build-ouput
+        uses: actions/cache/save@v3
         with:
-          path: ${{ github.workspace }}/local
+          path: |
+            ./local
           key: ${{ runner.os }}-build-output-run_${{ github.run_id }}
-      
+
   publish:
     runs-on: ubuntu-latest
+    # Warning: restore cache saved by build job requires to use the exact same container image, because cache version considerations.
+    # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+    # https://github.com/actions/cache#cache-version
+    # `enableCrossOsArchive: true` does not solve the issue.
+    container:
+      image: mstorsjo/llvm-mingw:latest
     needs: build
     steps:
-      - name: Restore cached build ouput
+      - name: Restore build ouput cache
         uses: actions/cache/restore@v3
+        id: cache-restore-build-ouput
         with:
-          path: ${{ github.workspace }}/local
+          path: |
+            ./local
           key: ${{ runner.os }}-build-output-run_${{ github.run_id }}
+          fail-on-cache-miss: true
       - name: archive
         run: |
+
+          echo "current working dir:"
+          pwd
+          echo "current working dir content:"
+          ls -l ./
+          ls -l ./local
           mkdir output
           mkdir output/bin
           mkdir output/lib
           mkdir output/pkgconfig
           readlink -f output
-          cp ${{ github.workspace }}/local/bin/*.exe ${{ github.workspace }}/local/bin/*.dll output/bin
-          cp ${{ github.workspace }}/local/bin/*.lib ${{ github.workspace }}/local/lib/*.def output/lib
-          cp ${{ github.workspace }}/local/lib/pkgconfig/*.pc output/lib/pkgconfig
-          cp -r ${{ github.workspace }}/local/include output
-          # tar cfz all.tar.gz ${{ github.workspace }}/local/bin
+          cp local/bin/*.exe local/bin/*.dll output/bin
+          cp local/bin/*.lib local/lib/*.def output/lib
+          cp local/lib/pkgconfig/*.pc output/lib/pkgconfig
+          cp -r local/include output
+          # tar cfz all.tar.gz local/bin
           cd output
           zip -r -D ../ffmpeg-4.2.1-wos-arm64.zip .
       - name: Create Release
